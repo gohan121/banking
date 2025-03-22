@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-6 offset-md-3">
+    <div class="card shadow-sm text-center mb-3">
+      <div class="card-header">
+        <h3>Account Balance</h3>
+      </div>
+      <div class="card-body">
+        <h2>{{ user.balance | int }} units</h2>
+      </div>
+    </div>
+    <div class="text-center">
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

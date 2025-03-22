@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header text-center">
+        <h3>Profile</h3>
+      </div>
+      <div class="card-body text-center">
+        <!-- Placeholder Profile Icon -->
+        <img src="https://via.placeholder.com/150" alt="Profile Picture" class="rounded-circle mb-3" style="width:150px; height:150px;">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <!-- Extra details added below -->
+        <p><strong>Account Balance:</strong> {{ user.balance | int }} units</p>
+        <p><strong>Member Since:</strong> {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+        <p><strong>Role:</strong> Customer</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

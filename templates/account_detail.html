@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header">
+    <h2>Account Details</h2>
+  </div>
+  <div class="card-body">
+    <h4>{{ user.username }} ({{ user.email }})</h4>
+    <p><strong>Balance:</strong> {{ user.balance | int }} units</p>
+  </div>
+</div>
+
+<div class="mb-3">
+  <h3>Transaction History</h3>
+  {% if transactions %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Sender</th>
+          <th>Receiver</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in transactions %}
+          <tr>
+            <td>{{ tx.timestamp | float | datetimeformat }}</td>
+            <td>{{ tx.sender }}</td>
+            <td>{{ tx.receiver }}</td>
+            <td>{{ tx.amount }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No transactions found for this account.</p>
+  {% endif %}
+</div>
+
+<div class="mt-3">
+  <a href="{{ url_for('accounts') }}" class="btn btn-secondary">Back to Accounts</a>
+</div>
+{% endblock %}

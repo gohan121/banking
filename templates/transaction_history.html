@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header">
+    <h3>Transaction History</h3>
+  </div>
+  <div class="card-body">
+    {% if transactions %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Sender</th>
+              <th>Receiver</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tx in transactions %}
+            <tr>
+              <td>{{ tx.timestamp | float | datetimeformat }}</td>
+              <td>{{ tx.sender }}</td>
+              <td>{{ tx.receiver }}</td>
+              <td>{{ tx.amount }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-center">No transactions found for your account.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

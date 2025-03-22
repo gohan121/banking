@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+  <!-- Transaction Form -->
+  <div class="mb-4">
+    <h2>Submit Transaction</h2>
+    <form id="txForm" method="post" action="/new_transaction">
+      <div class="mb-3">
+        <label for="receiver" class="form-label">Receiver Email</label>
+        <input type="email" class="form-control" id="receiver" name="receiver" placeholder="Enter receiver's email" required>
+      </div>
+      <div class="mb-3">
+        <label for="amount" class="form-label">Amount</label>
+        <input type="number" class="form-control" id="amount" name="amount" placeholder="Enter amount" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit Transaction</button>
+    </form>
+  </div>
+
+  <!-- Ledger Container (if you want to display block details here) -->
+  <div id="ledger">
+    <div class="text-center">Loading blockchain data...</div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">Confirm Transaction</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to submit this transaction?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmBtn" class="btn btn-primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+  <div id="transactionToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        Transaction submitted successfully!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Store the form data temporarily for confirmation
+    let pendingFormData = null;
+
+    // Intercept the form submission to show the confirmation modal
+    document.getElementById('txForm').addEventListener('submit', function(e) {
+        e.preventDefault();  // Prevent default form submission
+
+        // Save form data in a FormData object for later use
+        pendingFormData = new FormData(this);
+        console.log("Pending form data:", Array.from(pendingFormData.entries()));
+
+        // Show the confirmation modal
+        const confirmModalEl = document.getElementById('confirmModal');
+        const confirmModal = new bootstrap.Modal(confirmModalEl);
+        confirmModal.show();
+    });
+
+    // Handle confirmation in the modal
+    document.getElementById('confirmBtn').addEventListener('click', async function() {
+        // Hide the confirmation modal
+        const confirmModalEl = document.getElementById('confirmModal');
+        const confirmModal = bootstrap.Modal.getInstance(confirmModalEl);
+        confirmModal.hide();
+
+        // Send the transaction using AJAX
+        try {
+            const response = await fetch('/new_transaction', {
+                method: 'POST',
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: pendingFormData
+            });
+            console.log("Response status:", response.status);
+            if (response.ok) {
+                console.log("Transaction submitted successfully.");
+                // Show toast notification on successful submission
+                const toastElement = document.getElementById('transactionToast');
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+                // Clear the form fields and reset pendingFormData
+                document.getElementById('txForm').reset();
+                pendingFormData = null;
+            } else {
+                const errorData = await response.json();
+                console.error('Transaction submission failed:', errorData.error || response.statusText);
+            }
+        } catch (error) {
+            console.error('Error submitting transaction:', error);
+        }
+    });
+
+    // Optional: Function to fetch and update ledger data (if you want to display block details)
+    async function fetchChainData() {
+        try {
+            const response = await fetch('/chain_data');
+            if (!response.ok) {
+              console.error('Failed to fetch chain data:', response.status);
+              return;
+            }
+            const data = await response.json();
+            const ledgerDiv = document.getElementById('ledger');
+            ledgerDiv.innerHTML = ''; // Clear existing content
+
+            data.chain.forEach(function(block) {
+                const card = document.createElement('div');
+                card.className = 'card shadow-sm mb-3';
+
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body';
+
+                cardBody.innerHTML = `
+                    <h5 class="card-title">Block #${block.index}</h5>
+                    <p class="card-text"><small class="text-muted">${new Date(block.timestamp * 1000).toLocaleString()}</small></p>
+                    <p><strong>Previous Hash:</strong> ${block.previous_hash}</p>
+                    <p><strong>Hash:</strong> ${block.hash}</p>
+                    <p><strong>Nonce:</strong> ${block.nonce}</p>
+                    <h6>Transactions:</h6>
+                    <ul class="list-group list-group-flush" id="txList-${block.index}"></ul>
+                `;
+
+                const txList = cardBody.querySelector(`#txList-${block.index}`);
+                if (block.transactions.length === 0) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = 'No transactions';
+                    txList.appendChild(li);
+                } else {
+                    block.transactions.forEach(function(tx) {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        li.textContent = `${tx.sender} → ${tx.receiver}: ${tx.amount}`;
+                        txList.appendChild(li);
+                    });
+                }
+                card.appendChild(cardBody);
+                ledgerDiv.appendChild(card);
+            });
+        } catch (error) {
+            console.error('Error fetching blockchain data:', error);
+        }
+    }
+    // Poll the /chain_data endpoint every 5 seconds
+    setInterval(fetchChainData, 5000);
+    fetchChainData();
+  });
+</script>
+{% endblock %}

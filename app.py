@@ -204,8 +204,29 @@ def login():
 
 @app.route('/logout')
 def logout():
+    user = current_user()
+    if user:
+        # Remove all transactions related to the user
+        global blockchain
+        blockchain.unconfirmed_transactions = [
+            tx for tx in blockchain.unconfirmed_transactions if tx['sender'] != user.email and tx['receiver'] != user.email
+        ]
+        
+        # Remove blocks containing the user's transactions
+        new_chain = [blockchain.chain[0]]  # Keep the Genesis Block
+        for block in blockchain.chain[1:]:
+            filtered_transactions = [
+                tx for tx in block.transactions if tx['sender'] != user.email and tx['receiver'] != user.email
+            ]
+            if filtered_transactions:
+                block.transactions = filtered_transactions
+                block.hash = block.compute_hash()  # Recompute hash after modifying transactions
+                new_chain.append(block)
+        
+        blockchain.chain = new_chain  # Update blockchain with filtered blocks
+
     session.pop('user_email', None)
-    flash("You have been logged out.", "info")
+    flash("Your transaction history has been deleted, and you have been logged out.", "info")
     return redirect(url_for('login'))
 
 # -----------------------

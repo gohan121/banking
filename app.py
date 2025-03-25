@@ -76,6 +76,9 @@ class Block:
 
 class Blockchain:
     difficulty = 2  # Mining difficulty
+    def add_new_transaction(self, transaction):
+        self.unconfirmed_transactions.append(transaction)
+        print("Transaction added to unconfirmed transactions:", self.unconfirmed_transactions)
 
     def __init__(self):
         self.unconfirmed_transactions = []  # Pending transactions
@@ -271,6 +274,7 @@ def new_transaction():
         "timestamp": time.time()
     }
     blockchain.add_new_transaction(transaction)
+    blockchain.mine()
     print("Transaction recorded on blockchain:", transaction)
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
